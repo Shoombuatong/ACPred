@@ -1,4 +1,4 @@
-###### Feature is derived from 
+###### Feature is derived from Feature extraction.R
 ############# MODI for internal
 Dat <- data.frame(AAC,PAAC,APAAC,Class = label)
 n = ncol(Dat)
