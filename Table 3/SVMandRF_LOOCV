@@ -1,0 +1,70 @@
+#######set directory
+setwd('D:\\Peptide prediction\\Anticancer peptides\\Dataset')
+#######Load package
+library(Interpol)
+library(protr)
+library(seqinr)
+library(caret)
+library(AUC)
+library(ROCR)
+library(prospectr)
+
+customRF <- list(type = "Classification", library = "randomForest", loop = NULL)
+customRF$parameters <- data.frame(parameter = c("mtry", "ntree"), class = rep("numeric", 2), label = c("mtry", "ntree"))
+customRF$grid <- function(x, y, len = NULL, search = "grid") {}
+customRF$fit <- function(x, y, wts, param, lev, last, weights, classProbs, ...) {
+  randomForest(x, y, mtry = param$mtry, ntree=param$ntree, ...)
+}
+customRF$predict <- function(modelFit, newdata, preProc = NULL, submodels = NULL)
+   predict(modelFit, newdata)
+customRF$prob <- function(modelFit, newdata, preProc = NULL, submodels = NULL)
+   predict(modelFit, newdata, type = "prob")
+customRF$sort <- function(x) x[order(x[,1]),]
+customRF$levels <- function(x) x$classes
+
+########################## SVM -5CV
+internal = data.frame(AAC,Class = label)
+
+
+for (i in 1: iter){
+M = train(Class ~ ., data = internal, 
+                             method = "gaussprRadial",
+                             trControl = trainControl(method = "LOOCV"),
+                             preProc = c("center", "scale"))
+predclass = M$ finalModel @ fitted
+predprob = prediction(predict(M, internal, type = "prob")[,2],internal$Class)
+perf_AUC = performance(predprob,"auc") #Calculate the AUC value
+AUCtr = perf_AUC@y.values[[1]]
+data1 = data.frame(predclass,label)
+data = table(data1[,1], data1[,2])
+	ACCtr = (data[1]+data[4])/(data[1]+data[2]+data[3]+data[4])*100
+	SENStr  =  (data[1]/(data[1]+data[2]))*100
+	SPECtr= (data[4])/(data[3]+data[4])*100
+	MCC1      = (data[1]*data[4]) - (data[3]*data[2])
+	MCC2      =  (data[4]+data[2])*(data[4]+data[3])
+	MCC3      =  (data[1]+data[2])*(data[1]+data[3])
+	MCC4	=  sqrt(MCC2)*sqrt(MCC3)
+	MCCtr  = MCC1/MCC4
+}
+
+round(data.frame (ACCtr,SPECtr,SENStr,MCCtr,AUCtr),3)
+
+########################## RF -5CV
+tunegrid <- expand.grid(.mtry=c(1:10), .ntree=seq(100,500,100))
+RFmodel <- train(Class~., data=internal , method=customRF, metric=c("Accuracy"), tuneGrid=tunegrid, trControl= trainControl(method = "LOOCV"))
+Resultcv = RFmodel$ finalModel$ confusion [,1:2]
+pred=prediction(RFmodel$ finalModel$ votes[,2],internal[,ncol(internal)])
+perf_AUC=performance(pred,"auc") #Calculate the AUC value
+AUCtr = perf_AUC@y.values[[1]]
+ACCtr = (data[1]+data[4])/(data[1]+data[2]+data[3]+data[4])*100
+	SENStr  =  (data[1]/(data[1]+data[2]))*100
+	SPECtr= (data[4])/(data[3]+data[4])*100
+	MCC1      = (data[1]*data[4]) - (data[3]*data[2])
+	MCC2      =  (data[4]+data[2])*(data[4]+data[3])
+	MCC3      =  (data[1]+data[2])*(data[1]+data[3])
+	MCC4	=  sqrt(MCC2)*sqrt(MCC3)
+	MCCtr  = MCC1/MCC4
+}
+
+round(data.frame (ACCtr,SPECtr,SENStr,MCCtr,AUCtr),3)
+
