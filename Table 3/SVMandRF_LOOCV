@@ -24,9 +24,6 @@ customRF$levels <- function(x) x$classes
 
 ########################## SVM -5CV
 internal = data.frame(AAC,Class = label)
-
-
-for (i in 1: iter){
 M = train(Class ~ ., data = internal, 
                              method = "gaussprRadial",
                              trControl = trainControl(method = "LOOCV"),
@@ -45,8 +42,6 @@ data = table(data1[,1], data1[,2])
 	MCC3      =  (data[1]+data[2])*(data[1]+data[3])
 	MCC4	=  sqrt(MCC2)*sqrt(MCC3)
 	MCCtr  = MCC1/MCC4
-}
-
 round(data.frame (ACCtr,SPECtr,SENStr,MCCtr,AUCtr),3)
 
 ########################## RF -5CV
@@ -64,7 +59,5 @@ ACCtr = (data[1]+data[4])/(data[1]+data[2]+data[3]+data[4])*100
 	MCC3      =  (data[1]+data[2])*(data[1]+data[3])
 	MCC4	=  sqrt(MCC2)*sqrt(MCC3)
 	MCCtr  = MCC1/MCC4
-}
-
 round(data.frame (ACCtr,SPECtr,SENStr,MCCtr,AUCtr),3)
 
